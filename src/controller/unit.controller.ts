@@ -58,3 +58,24 @@ export const getUnitById = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const deleteUnit = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await prisma.unit.delete({
+      where: { id: id as string },
+    });
+
+    res.json({
+      success: true,
+      message: "Unit deleted was successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to get all data",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
