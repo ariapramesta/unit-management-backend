@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import unitRoutes from "./routes/unit.routes";
 import { errorHandler } from "./middleware/errorHandler";
+import { notFound } from "./middleware/notFound";
 
 dotenv.config();
 
@@ -19,5 +20,6 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/api/units", unitRoutes);
 
 app.use(errorHandler);
+app.use(notFound);
 
 export default app;
