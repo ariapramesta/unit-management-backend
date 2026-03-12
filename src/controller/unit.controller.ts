@@ -79,3 +79,26 @@ export const deleteUnit = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const updateUnit = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const unit = await prisma.unit.update({
+      where: { id: id as string },
+      data: { ...(status !== undefined && { status }) },
+    });
+
+    res.json({
+      success: true,
+      data: unit,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update post",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
