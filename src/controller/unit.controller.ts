@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 
+import { Status } from "../../generated/prisma/enums";
+
 export const createUnit = async (req: Request, res: Response) => {
   try {
     const { name, type, status } = req.body;
@@ -27,7 +29,13 @@ export const createUnit = async (req: Request, res: Response) => {
 
 export const getAllUnit = async (req: Request, res: Response) => {
   try {
-    const unit = await prisma.unit.findMany();
+    const { status } = req.query;
+
+    const isValidStatus = Object.values(Status).includes(status as Status);
+
+    const unit = await prisma.unit.findMany({
+      where: { status: isValidStatus ? (status as Status) : undefined },
+    });
 
     res.json({
       success: true,
