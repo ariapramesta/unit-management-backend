@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma";
 
 import { Status, Type } from "../../generated/prisma/enums";
 import { validateStatusUpdate } from "../utils/statusValidation";
+import { toTitleCase } from "../utils/normalizeResponse";
 
 export const createUnit = async (req: Request, res: Response) => {
   try {
@@ -16,10 +17,16 @@ export const createUnit = async (req: Request, res: Response) => {
       normalizedStatus as Status,
     );
 
+    if (!name?.trim() || !type?.trim() || !status?.trim())
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required!",
+      });
+
     if (!isTypeValid) {
       return res.status(400).json({
         success: false,
-        message: "Invalid status! Only Capsul or Cabin are allowed",
+        message: "Invalid status! Only Capsule or Cabin are allowed",
       });
     }
 
@@ -31,12 +38,6 @@ export const createUnit = async (req: Request, res: Response) => {
       });
     }
 
-    if (!name?.trim() || !type?.trim() || !status?.trim())
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required!",
-      });
-
     const unit = await prisma.unit.create({
       data: {
         name: name.trim(),
@@ -44,9 +45,16 @@ export const createUnit = async (req: Request, res: Response) => {
         status: normalizedStatus,
       },
     });
+
+    const transformedUnit = {
+      ...unit,
+      type: toTitleCase(unit.type),
+      status: toTitleCase(unit.status),
+    };
+
     res.status(201).json({
       success: true,
-      data: unit,
+      data: transformedUnit,
     });
   } catch (error) {
     res.status(500).json({
@@ -61,16 +69,36 @@ export const getAllUnit = async (req: Request, res: Response) => {
   try {
     const { status } = req.query;
 
-    const isValidStatus = Object.values(Status).includes(status as Status);
+    let filterStatus: Status | undefined = undefined;
 
-    const unit = await prisma.unit.findMany({
-      where: { status: isValidStatus ? (status as Status) : undefined },
+    if (status && typeof status === "string" && status !== "all") {
+      const normalizedStatus = status.toLowerCase();
+
+      const isValid = Object.values(Status).includes(
+        normalizedStatus as Status,
+      );
+
+      if (isValid) {
+        filterStatus = normalizedStatus as Status;
+      }
+    }
+
+    const units = await prisma.unit.findMany({
+      where: {
+        status: filterStatus,
+      },
       orderBy: { name: "asc" },
     });
 
+    const transformedUnits = units.map((unit) => ({
+      ...unit,
+      status: toTitleCase(unit.status),
+      type: toTitleCase(unit.type),
+    }));
+
     res.json({
       success: true,
-      data: unit,
+      data: transformedUnits,
     });
   } catch (error) {
     res.status(500).json({
@@ -94,9 +122,15 @@ export const getUnitById = async (req: Request, res: Response) => {
       });
     }
 
+    const transformedUnit = {
+      ...unit,
+      type: toTitleCase(unit.type),
+      status: toTitleCase(unit.status),
+    };
+
     res.json({
       success: true,
-      data: unit,
+      data: transformedUnit,
     });
   } catch (error) {
     res.status(500).json({
@@ -148,6 +182,22 @@ export const updateUnit = async (req: Request, res: Response) => {
         .json({ success: false, message: "Status is required" });
     }
 
+    const normalizedStatus = status.toLowerCase();
+
+    if (
+      normalizedStatus &&
+      typeof normalizedStatus === "string" &&
+      normalizedStatus !== "all"
+    ) {
+      const isValid = Object.values(Status).includes(
+        normalizedStatus as Status,
+      );
+      if (!isValid)
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid status" });
+    }
+
     const unit = await prisma.unit.findUnique({ where: { id: id as string } });
 
     if (!unit)
@@ -157,7 +207,7 @@ export const updateUnit = async (req: Request, res: Response) => {
 
     const validationResult = validateStatusUpdate(
       unit.status,
-      status as Status,
+      normalizedStatus as Status,
     );
 
     if (!validationResult.isValid) {
@@ -170,14 +220,20 @@ export const updateUnit = async (req: Request, res: Response) => {
     const updatedUnit = await prisma.unit.update({
       where: { id: id as string },
       data: {
-        status: (status as string).trim() as Status,
+        status: normalizedStatus.trim() as Status,
       },
     });
+
+    const transformedUnit = {
+      ...updatedUnit,
+      type: toTitleCase(updatedUnit.type),
+      status: toTitleCase(updatedUnit.status),
+    };
 
     res.json({
       success: true,
       message: "Unit status updated successfully",
-      data: updatedUnit,
+      data: transformedUnit,
     });
   } catch (error) {
     res.status(500).json({
