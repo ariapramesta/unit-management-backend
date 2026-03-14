@@ -3,7 +3,6 @@ import { prisma } from "../lib/prisma";
 
 import { Status, Type } from "../../generated/prisma/enums";
 import { validateStatusUpdate } from "../utils/statusValidation";
-import { toTitleCase } from "../utils/normalizeResponse";
 
 export const createUnit = async (req: Request, res: Response) => {
   try {
@@ -46,15 +45,9 @@ export const createUnit = async (req: Request, res: Response) => {
       },
     });
 
-    const transformedUnit = {
-      ...unit,
-      type: toTitleCase(unit.type),
-      status: toTitleCase(unit.status),
-    };
-
     res.status(201).json({
       success: true,
-      data: transformedUnit,
+      data: unit,
     });
   } catch (error) {
     res.status(500).json({
@@ -90,15 +83,9 @@ export const getAllUnit = async (req: Request, res: Response) => {
       orderBy: { name: "asc" },
     });
 
-    const transformedUnits = units.map((unit) => ({
-      ...unit,
-      status: toTitleCase(unit.status),
-      type: toTitleCase(unit.type),
-    }));
-
     res.json({
       success: true,
-      data: transformedUnits,
+      data: units,
     });
   } catch (error) {
     res.status(500).json({
@@ -122,15 +109,9 @@ export const getUnitById = async (req: Request, res: Response) => {
       });
     }
 
-    const transformedUnit = {
-      ...unit,
-      type: toTitleCase(unit.type),
-      status: toTitleCase(unit.status),
-    };
-
     res.json({
       success: true,
-      data: transformedUnit,
+      data: unit,
     });
   } catch (error) {
     res.status(500).json({
@@ -224,16 +205,10 @@ export const updateUnit = async (req: Request, res: Response) => {
       },
     });
 
-    const transformedUnit = {
-      ...updatedUnit,
-      type: toTitleCase(updatedUnit.type),
-      status: toTitleCase(updatedUnit.status),
-    };
-
     res.json({
       success: true,
       message: "Unit status updated successfully",
-      data: transformedUnit,
+      data: updatedUnit,
     });
   } catch (error) {
     res.status(500).json({
