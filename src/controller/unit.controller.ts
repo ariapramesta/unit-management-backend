@@ -140,7 +140,13 @@ export const deleteUnit = async (req: Request, res: Response) => {
 export const updateUnit = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { newStatus } = req.body;
+    const { status } = req.body;
+
+    if (!status) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Status is required" });
+    }
 
     const unit = await prisma.unit.findUnique({ where: { id: id as string } });
 
@@ -151,7 +157,7 @@ export const updateUnit = async (req: Request, res: Response) => {
 
     const validationResult = validateStatusUpdate(
       unit.status,
-      newStatus as Status,
+      status as Status,
     );
 
     if (!validationResult.isValid) {
@@ -164,13 +170,13 @@ export const updateUnit = async (req: Request, res: Response) => {
     const updatedUnit = await prisma.unit.update({
       where: { id: id as string },
       data: {
-        status: newStatus.trim() as Status,
+        status: (status as string).trim() as Status,
       },
     });
 
     res.json({
       success: true,
-      message: "Status unit berhasil diperbarui",
+      message: "Unit status updated successfully",
       data: updatedUnit,
     });
   } catch (error) {
