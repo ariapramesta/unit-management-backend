@@ -16,7 +16,7 @@ model Unit {
   id          String   @id @default(uuid())
   name        String
   type        Type
-  status      Status
+  status      Status   @default(available)
   lastUpdated DateTime @updatedAt
 }
 
