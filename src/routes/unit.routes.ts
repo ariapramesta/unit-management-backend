@@ -13,6 +13,6 @@ router.post("/", createUnit);
 router.get("/", getAllUnit);
 router.get("/:id", getUnitById);
 router.delete("/:id", deleteUnit);
-router.put("/:id", updateUnit);
+router.patch("/:id/status", updateUnit);
 
 export default router;
